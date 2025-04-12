@@ -65,5 +65,3 @@ At its core, Pong Legends plays like traditional Pong: two paddles, one ball, an
 **Pong Legends** brings the spirit of classic Pong into a full-featured, customizable arcade experience with deep progression, stylish upgrades, and smooth, competitive gameplay. Whether you're a retro fan or a mobile gamer looking for something fresh, this is Pong reborn—and leveled up.
 
 ---
-
-Let me know if you want this description broken up into sections for your website, `package.json`, or app store submission.
