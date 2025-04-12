@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pong Legends</title>
+  <style>
+    body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to bottom, #111, #1a1a1a);
+  color: #fff;
+  overflow: hidden;
+}
+canvas {
+  display: block;
+  margin: 0 auto;
+  background: black;
+  border: 3px solid #0ff;
+  border-radius: 10px;
+}
+#hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px solid #0ff;
+  z-index: 10;
+}
+.hud-item {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid #00f6ff;
+  border-radius: 5px;
+  padding: 8px 12px;
+  font-size: 1rem;
+  text-shadow: 0 0 5px #0ff;
+}
+.hud-button {
+  padding: 8px 15px;
+  background: linear-gradient(45deg, #4a00e0, #8e2de2);
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 10px #8e2de2;
+  transition: transform 0.2s;
+}
+.hud-button:hover {
+  transform: scale(1.05);
+}
+#xpBarContainer {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 20px;
+  background: #222;
+  border: 2px solid #0ff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 10px #0ff;
+}
+#xpBarFill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, #00f6ff, #4a00e0);
+  transition: width 0.3s;
+}
+#shopContainer {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85%;
+  max-width: 900px;
+  background: linear-gradient(to right, #1e1e1e, #2c2c2c);
+  border: 3px solid #0ff;
+  border-radius: 15px;
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.5);
+  padding: 25px;
+  z-index: 999;
+}
+.shop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #0ff;
+  margin-bottom: 15px;
+}
+.shop-title {
+  font-size: 2rem;
+  color: #00f6ff;
+  text-shadow: 0 0 5px #0ff;
+}
+.shop-close {
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  text-shadow: 0 0 5px #f00;
+}
+.shop-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.shop-item {
+  width: 160px;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid #00f6ff;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  box-shadow: 0 0 10px #00f6ff44;
+  position: relative;
+}
+.shop-item.locked {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+.shop-item-name {
+  margin: 10px 0;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+.shop-item-price {
+  color: gold;
+  margin-bottom: 5px;
+}
+.shop-item-button {
+  padding: 6px 12px;
+  background: linear-gradient(to right, #4a00e0, #8e2de2);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.shop-item-button:hover {
+  transform: scale(1.05);
+}
+.shop-item-button:disabled {
+  background: #444;
+  cursor: not-allowed;
+}
+/* Audio controls styling */
+#audioControls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px solid #0ff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+}
+.audio-toggle {
+  background: linear-gradient(45deg, #4a00e0, #8e2de2);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  box-shadow: 0 0 10px rgba(142, 45, 226, 0.5);
+}
+.audio-toggle i {
+  font-size: 1.2rem;
+}
+.audio-toggle.muted {
+  background: #444;
+  opacity: 0.8;
+}
+  </style>
+</head>
+<body>
+ <!-- 🎮 Main Game Canvas -->
+ <canvas id="gameCanvas" width="800" height="500"></canvas>
+ 
+<!-- 🎉 Level Announcement Screen -->
+<div id="levelAnnouncement" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:9999;font-size:3rem;font-weight:bold;color:#0ff;text-shadow:0 0 20px #0ff;font-family:'Segoe UI';">
+  Level <span id=" levelNumber">1</span>
+</div>
+
+
+ <!-- 🎬 Start Screen -->
+ <div id="startScreen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Segoe UI'; font-size: 1.2rem; z-index: 9999;">
+   <h1 style="font-size: 2rem; color: #0ff;">Welcome to Pong Legends</h1>
+   <p>Use W/S or ↑/↓ to move your paddle</p>
+   <button onclick="startGame()" style="margin-top: 20px; padding: 10px 20px; font-size: 1rem; border: none; border-radius: 8px; background: linear-gradient(to right, #4a00e0, #8e2de2); color: white; box-shadow: 0 0 10px #8e2de2; cursor: pointer;">Start Game</button>
+ </div>
+
+ <!-- 🧠 Game HUD -->
+ <div id="hud">
+   <div class="hud-item">🪙Coins: <span id="coinCount">999999</span></div>
+   <div class="hud-item">🏓Level: <span id="playerLevel">1</span></div>
+   <div class="hud-item">🔢Score: <span id="scoreDisplay">0 | 0</span></div>
+   <button class="hud-button" onclick="toggleShop()">🛒 Shop</button>
+ </div>
+
+ <!-- 🔊 Audio Controls -->
+ <div id="audioControls">
+   <button class="audio-toggle" id="musicToggle" onclick="toggleMusic()">
+     Music: ON
+   </button>
+   <button class="audio-toggle" id="sfxToggle" onclick="toggleSFX()">
+     SFX: ON
+   </button>
+ </div>
+
+ <!-- 📈 XP Progress Bar -->
+ <div id="xpBarContainer"><div id="xpBarFill"></div></div>
+
+ <!-- 🛍️ Shop Menu -->
+ <div id="shopContainer">
+   <div class="shop-header">
+     <div class="shop-title">Paddle Shop</div>
+     <button class="shop-close" onclick="toggleShop()">✕</button>
+   </div>
+   <div class="shop-items" id="shopItems"></div>
+ </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    
+    let coins = parseInt(localStorage.getItem("pongCoins")) || 999999;
+    let level = parseInt(localStorage.getItem("pongLevel")) || 1;
+    let xp = parseInt(localStorage.getItem("pongXP")) || 0;
+    let xpToLevel = 5 + (level - 1) * 5;
+    let playerScore = 0;
+    let aiScore = 0;
+    let gamePaused = false;
+    
+    // Audio settings
+    let musicEnabled = localStorage.getItem("pongMusicEnabled") !== "false";
+    let sfxEnabled = localStorage.getItem("pongSFXEnabled") !== "false";
+    let bgMusic = null;
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Sound effects
+    const sounds = {
+      paddleHit: null,
+      score: null,
+      coin: null,
+      levelUp: null
+    };
+    
+    // Create background music using the Web Audio API
+    function createBackgroundMusic() {
+      if (bgMusic) return; // Don't recreate if it exists
+      
+      const oscillator1 = audioContext.createOscillator();
+      const oscillator2 = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      
+      // First oscillator - bass notes
+      oscillator1.type = 'sine';
+      oscillator1.frequency.value = 65.41; // C2
+      
+      // Second oscillator - melody
+      oscillator2.type = 'triangle';
+      oscillator2.frequency.value = 130.81; // C3
+      
+      // Filter for a smoother sound
+      filter.type = 'lowpass';
+      filter.frequency.value = 800;
+      filter.Q.value = 1;
+      
+      // Connect everything
+      oscillator1.connect(filter);
+      oscillator2.connect(filter);
+      filter.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Set initial volume
+      gainNode.gain.value = musicEnabled ? 0.2 : 0;
+      
+      // Start the oscillators
+      oscillator1.start();
+      oscillator2.start();
+      
+      // Change notes periodically for a simple melody
+      let baseNotes = [65.41, 73.42, 82.41, 87.31]; // C2, D2, E2, F2
+      let melodyNotes = [261.63, 293.66, 329.63, 349.23]; // C4, D4, E4, F4
+      let noteIndex = 0;
+      
+      setInterval(() => {
+        if (!musicEnabled) return;
+        
+        noteIndex = (noteIndex + 1) % baseNotes.length;
+        
+        // Smoothly change frequencies
+        oscillator1.frequency.exponentialRampToValueAtTime(
+          baseNotes[noteIndex], 
+          audioContext.currentTime + 0.1
+        );
+        
+        oscillator2.frequency.exponentialRampToValueAtTime(
+          melodyNotes[noteIndex], 
+          audioContext.currentTime + 0.1
+        );
+      }, 500); // Change every half second
+      
+      // Save references to control music
+      bgMusic = {
+        gainNode,
+        setVolume: (vol) => {
+          gainNode.gain.setValueAtTime(vol, audioContext.currentTime);
+        },
+        play: () => {
+          gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        },
+        pause: () => {
+          gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        }
+      };
+    }
+    
+    // Create sound effects
+    function createSoundEffect(frequency, type, duration, volume) {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.type = type;
+      oscillator.frequency.value = frequency;
+      gainNode.gain.value = volume;
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+      
+      setTimeout(() => {
+        oscillator.stop();
+      }, duration * 1000);
+    }
+    
+    // Initialize sound effects
+    function initSounds() {
+      // Resume audio context if suspended (needed for newer browsers)
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
+      
+      // Create background music
+      createBackgroundMusic();
+      
+      sounds.paddleHit = () => createSoundEffect(220, 'square', 0.1, 0.3);
+      sounds.score = () => createSoundEffect(330, 'sine', 0.3, 0.4);
+      sounds.coin = () => {
+        createSoundEffect(660, 'sine', 0.1, 0.2);
+        setTimeout(() => createSoundEffect(880, 'sine', 0.1, 0.2), 100);
+      };
+      sounds.levelUp = () => {
+        createSoundEffect(440, 'square', 0.1, 0.3);
+        setTimeout(() => createSoundEffect(550, 'square', 0.1, 0.3), 150);
+        setTimeout(() => createSoundEffect(660, 'square', 0.2, 0.3), 300);
+      };
+    }
+    
+    // Play a sound if SFX is enabled
+    function playSound(sound) {
+      if (sfxEnabled && sounds[sound]) {
+        sounds[sound]();
+      }
+    }
+    
+    // Toggle music on/off
+    function toggleMusic() {
+      musicEnabled = !musicEnabled;
+      localStorage.setItem("pongMusicEnabled", musicEnabled);
+      
+      const musicToggle = document.getElementById("musicToggle");
+      musicToggle.textContent = `Music: ${musicEnabled ? 'ON' : 'OFF'}`;
+      musicToggle.classList.toggle("muted", !musicEnabled);
+      
+      if (bgMusic) {
+        if (musicEnabled) {
+          bgMusic.play();
+        } else {
+          bgMusic.pause();
+        }
+      }
+    }
+    
+    // Toggle SFX on/off
+    function toggleSFX() {
+      sfxEnabled = !sfxEnabled;
+      localStorage.setItem("pongSFXEnabled", sfxEnabled);
+      
+      const sfxToggle = document.getElementById("sfxToggle");
+      sfxToggle.textContent = `SFX: ${sfxEnabled ? 'ON' : 'OFF'}`;
+      sfxToggle.classList.toggle("muted", !sfxEnabled);
+      
+      if (sfxEnabled) {
+        playSound('paddleHit'); // Play a test sound
+      }
+    }
+    
+    const player = { x: 10, y: 200, width: 12, height: 80, dy: 0 };
+    const ai = { x: canvas.width - 22, y: 200, width: 12, height: 80 };
+    const ball = { x: 400, y: 250, radius: 8, dx: 5, dy: 3 };
+    const coin = { x: 0, y: 0, radius: 6, visible: false };
+
+    
+    const shopItems = [
+      { id: 'default', name: 'Classic', price: 0, levelRequired: 1, owned: true, equipped: true },
+      { id: 'neon', name: 'Neon Blue', price: 20, levelRequired: 1, owned: false, equipped: false },
+      { id: 'fire', name: 'Fire', price: 40, levelRequired: 2, owned: false, equipped: false },
+      { id: 'gold', name: 'Golden', price: 100, levelRequired: 5, owned: false, equipped: false }
+    ];
+    
+    function getSkinColor(id) {
+      if (id === 'neon') return '#00f6ff';
+      if (id === 'fire') return '#ff4500';
+      if (id === 'gold') return 'gold';
+      return '#00ff99';
+    }
+    
+    function getEquippedSkin() {
+      const item = shopItems.find(i => i.equipped);
+      return getSkinColor(item?.id || 'default');
+    }
+    
+    function showLevelAnnouncement(lvl) {
+      const screen = document.getElementById("levelAnnouncement");
+      const number = document.getElementById("levelNumber");
+      number.textContent = lvl;
+      screen.style.display = "flex";
+      playSound('levelUp');
+      setTimeout(() => screen.style.display = "none", 2000);
+    }
+
+
+    function getWinThreshold() {
+      return level * 5;
+    }
+    
+    function loadShopProgress() {
+      const data = JSON.parse(localStorage.getItem("pongShop")) || {};
+      shopItems.forEach(item => {
+        if (data[item.id]) {
+          item.owned = data[item.id].owned;
+          item.equipped = data[item.id].equipped;
+        }
+      });
+    }
+    
+    function saveShopProgress() {
+      const data = {};
+      shopItems.forEach(item => {
+        data[item.id] = { owned: item.owned, equipped: item.equipped };
+      });
+      localStorage.setItem("pongShop", JSON.stringify(data));
+    }
+    
+    function renderShopItems() {
+      const container = document.getElementById("shopItems");
+      container.innerHTML = '';
+      shopItems.forEach(item => {
+        const el = document.createElement("div");
+        el.className = `shop-item ${!item.owned && level < item.levelRequired ? 'locked' : ''}`;
+        el.innerHTML = `
+          <div class="shop-item-image" style="width: 80px; height: 80px; margin: 0 auto 10px; border-radius: 6px; background: ${getSkinColor(item.id)};"></div>
+          <div class="shop-item-name">${item.name}</div>
+          <div style="font-size: 0.85rem; color: #8e2de2;">Unlocks at level ${item.levelRequired}</div>
+          ${!item.owned ? `<div class="shop-item-price">${item.price} coins</div>` : ''}
+          <button class="shop-item-button" ${item.equipped ? 'disabled' : ''} ${!item.owned && (level < item.levelRequired || coins < item.price) ? 'disabled' : ''}
+            onclick="handleShopAction('${item.id}')">
+            ${item.equipped ? 'Equipped' : item.owned ? 'Equip' : 'Buy'}
+          </button>
+        `;
+        container.appendChild(el);
+      });
+    }
+    
+    function handleShopAction(id) {
+      const item = shopItems.find(i => i.id === id);
+      if (!item.owned && coins >= item.price && level >= item.levelRequired) {
+        item.owned = true;
+        coins -= item.price;
+        playSound('coin'); // Play purchase sound
+      }
+      if (item.owned) {
+        shopItems.forEach(i => i.equipped = false);
+        item.equipped = true;
+      }
+      saveShopProgress();
+      renderShopItems();
+      updateHUD();
+    }
+    
+    function gainXP() {
+      xp++;
+      if (xp >= xpToLevel) {
+        xp = 0;
+        level++;
+        xpToLevel += 5;
+        showLevelAnnouncement(level);
+      }
+      updateHUD();
+      updateXPBar();
+    }
+    
+    function updateHUD() {
+      localStorage.setItem("pongCoins", coins);
+      localStorage.setItem("pongLevel", level);
+      localStorage.setItem("pongXP", xp);
+      document.getElementById("coinCount").textContent = coins;
+      document.getElementById("playerLevel").textContent = level;
+      document.getElementById("scoreDisplay").textContent = `${playerScore} | ${aiScore}`;
+    }
+    
+    function updateXPBar() {
+      const percent = (xp / xpToLevel) * 100;
+      document.getElementById("xpBarFill").style.width = percent + "%";
+    }
+    
+    function toggleShop() {
+      gamePaused = !gamePaused;
+      document.getElementById("shopContainer").style.display = gamePaused ? "block" : "none";
+      
+      // Pause/resume music based on game state
+      if (musicEnabled && bgMusic) {
+        if (gamePaused) {
+          bgMusic.setVolume(0.1); // Lower volume in shop
+        } else {
+          bgMusic.setVolume(0.2); // Normal volume during gameplay
+        }
+      }
+    }
+    
+    function update() {
+      if (gamePaused) return;
+    
+      player.y += player.dy;
+      player.y = Math.max(0, Math.min(canvas.height - player.height, player.y));
+    
+      if (ai.y + ai.height / 2 < ball.y) ai.y += 3;
+      else ai.y -= 3;
+    
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+    
+      if (ball.y <= 0 || ball.y >= canvas.height) {
+        ball.dy *= -1;
+        playSound('paddleHit'); // Wall bounce sound
+      }
+    
+      if (ball.x < player.x + player.width && ball.y > player.y && ball.y < player.y + player.height) {
+        ball.dx *= -1;
+        ball.x = player.x + player.width;
+        gainXP();
+        playSound('paddleHit'); // Player paddle hit sound
+      }
+    
+      if (ball.x > ai.x - ball.radius && ball.y > ai.y && ball.y < ai.y + ai.height) {
+        ball.dx *= -1;
+        ball.x = ai.x - ball.radius;
+        playSound('paddleHit'); // AI paddle hit sound
+      }
+    
+      if (ball.x < 0 || ball.x > canvas.width) resetBall();
+    
+      if (coin.visible && Math.hypot(ball.x - coin.x, ball.y - coin.y) < ball.radius + coin.radius) {
+        coin.visible = false;
+        coins++;
+        playSound('coin'); // Coin collection sound
+        updateHUD();
+      }
+      
+      spawnCoin(); // keep checking
+    }
+    
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = getEquippedSkin();
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      ctx.fillStyle = "#ff0066";
+      ctx.fillRect(ai.x, ai.y, ai.width, ai.height);
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+    
+      if (coin.visible) {
+        ctx.beginPath();
+        ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "gold";
+        ctx.fill();
+      }
+      
+      // Draw center line
+      ctx.setLineDash([5, 15]);
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0);
+      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    
+    function spawnCoin() {
+      if (Math.random() < 0.01 && !coin.visible) {
+        coin.x = Math.random() * (canvas.width - 40) + 20;
+        coin.y = Math.random() * (canvas.height - 40) + 20;
+        coin.visible = true;
+      }
+    }
+    
+    function resetBall() {
+      if (ball.x < 0) {
+        aiScore++;
+        playSound('score'); // AI scores
+      } else if (ball.x > canvas.width) {
+        playerScore++;
+        playSound('score'); // Player scores
+      }
+    
+      updateHUD();
+    
+      if (playerScore >= getWinThreshold() || aiScore >= getWinThreshold()) {
+        setTimeout(() => {
+          // Play victory/defeat sound
+          if (playerScore > aiScore) {
+            playSound('levelUp');
+          } else {
+            playSound('score');
+          }
+          
+          alert(playerScore > aiScore ? 'You win!' : 'AI wins!');
+          playerScore = 0;
+          aiScore = 0;
+          updateHUD();
+        }, 100);
+      }
+    
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+      ball.dx *= -1;
+    }
+    
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+    
+    function startGame() {
+      document.getElementById("startScreen").style.display = "none";
+      
+      // Initialize audio context on first interaction
+      try {
+        // This ensures AudioContext works on browsers that require user interaction
+        audioContext.resume().then(() => {
+          initSounds();
+          
+          // Update audio controls to match saved state
+          document.getElementById("musicToggle").textContent = `Music: ${musicEnabled ? 'ON' : 'OFF'}`;
+          document.getElementById("musicToggle").classList.toggle("muted", !musicEnabled);
+          document.getElementById("sfxToggle").textContent = `SFX: ${sfxEnabled ? 'ON' : 'OFF'}`;
+          document.getElementById("sfxToggle").classList.toggle("muted", !sfxEnabled);
+          
+          // Start background music if enabled
+          if (musicEnabled && bgMusic) {
+            bgMusic.play();
+          }
+          
+          // Play a start game sound
+          playSound('levelUp');
+        });
+      } catch (e) {
+        console.log("Audio initialization failed:", e);
+      }
+      
+      updateHUD();
+      loop();
+      requestFullscreen();
+    }
+    
+    
+    
+    function requestFullscreen() {
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) docEl.requestFullscreen();
+      else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+      else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen();
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("landscape").catch(() => {});
+      }
+    }
+    
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowUp" || e.key === "w") player.dy = -6;
+      if (e.key === "ArrowDown" || e.key === "s") player.dy = 6;
+    });
+    document.addEventListener("keyup", e => {
+      if (["ArrowUp", "ArrowDown", "w", "s"].includes(e.key)) player.dy = 0;
+    });
+    
+    // Touch support
+    canvas.addEventListener("touchstart", requestFullscreen);
+    canvas.addEventListener("touchstart", e => {
+      const touchY = e.touches[0].clientY - canvas.getBoundingClientRect().top;
+      player.y = touchY - player.height / 2;
+    });
+    canvas.addEventListener("touchmove", e => {
+      e.preventDefault();
+      const touchY = e.touches[0].clientY - canvas.getBoundingClientRect().top;
+      player.y = touchY - player.height / 2;
+    }, { passive: false });
+
+    
+    //esc key
+    document.addEventListener("DOMContentLoaded", () => {
+    const win = nw.Window.get();
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" || e.keyCode === 27) {
+        if (win.isFullscreen) {
+          win.leaveFullscreen();
+        }
+      }
+    });
+  });
+    
+    
+    // Keyboard shortcut for sound controls
+    document.addEventListener("keydown", e => {
+      if (e.key === "m") toggleMusic();
+      if (e.key === "s" && e.ctrlKey) {
+        e.preventDefault();
+        toggleSFX();
+      }
+    });
+    
+    // Init
+    loadShopProgress();
+    renderShopItems();
+    updateHUD();
+    updateXPBar();
+    </script>
+    </body>
+</html>
