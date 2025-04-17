@@ -1,7 +1,7 @@
 # Pong-Game
 ---
 
-**Pong Legends** is a modern, mobile-first evolution of the classic arcade hit. Designed for both desktop and landscape mobile play, it blends fast-paced action with deep progression, stylish customization, and smart AI. Whether you’re chasing high scores or unlocking epic skins, Pong Legends delivers a feature-rich experience that’s easy to pick up—and hard to put down.
+**Wavey Pong** is a modern, mobile-first evolution of the classic arcade hit. Designed for both desktop and landscape mobile play, it blends fast-paced action with deep progression, stylish customization, and smart AI. Whether you’re chasing high scores or unlocking epic skins, Pong Legends delivers a feature-rich experience that’s easy to pick up—and hard to put down. Play it on this website"https://waveygeometry.github.io/Wavey-Pong/Wavey.html"
 
 ---
 
